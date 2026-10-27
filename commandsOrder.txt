@@ -1,0 +1,6 @@
+For fast dev, just copy this..
+Build image: docker build -f Dockerfile.dev -t meat-proxy .
+Run container: docker run -it -p 5173:5173 --name meat-proxy-dev meat-proxy
+Start container again: docker start -ai meat-proxy-dev
+Run le stuff ..: http://localhost:5173/
+Edit le stuff: dev containers attach..

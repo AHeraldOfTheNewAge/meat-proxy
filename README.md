@@ -1,3 +1,3 @@
 # meat-proxy
 
-I created this repo simply because i like the name
+A simple browser based note taking app..
