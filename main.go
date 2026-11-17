@@ -29,14 +29,17 @@ func save() {
 
 func title(s string) string {
 	t := strings.SplitN(s, "\n", 2)[0]
+
 	if t == "" {
 		return "(empty)"
 	}
+
 	return t
 }
 
 func main() {
 	load()
+
 	app := tview.NewApplication()
 
 	list := tview.NewList().ShowSecondaryText(false)
@@ -48,9 +51,11 @@ func main() {
 
 	refresh := func() {
 		list.Clear()
+
 		for _, n := range notes {
 			list.AddItem(title(n), "", 0, nil)
 		}
+
 		if len(notes) > 0 {
 			list.SetCurrentItem(cur)
 			editor.SetText(notes[cur], true)
@@ -65,6 +70,7 @@ func main() {
 			editor.SetText(notes[i], true)
 		}
 	})
+
 	editor.SetChangedFunc(func() {
 		if cur < len(notes) {
 			t := editor.GetText()
@@ -73,6 +79,7 @@ func main() {
 			save()
 		}
 	})
+
 	add.SetSelectedFunc(func() {
 		notes = append(notes, "")
 		cur = len(notes) - 1
@@ -80,33 +87,41 @@ func main() {
 		save()
 		app.SetFocus(editor)
 	})
+
 	del.SetSelectedFunc(func() {
 		if len(notes) == 0 {
 			return
 		}
+
 		notes = append(notes[:cur], notes[cur+1:]...)
+
 		if cur >= len(notes) {
 			cur = len(notes) - 1
 		}
+
 		if cur < 0 {
 			cur = 0
 		}
+
 		refresh()
 		save()
 		app.SetFocus(list)
 	})
 
 	top := tview.NewFlex().AddItem(list, 30, 0, true).AddItem(editor, 0, 1, false)
+
 	bottom := tview.NewFlex().
 		AddItem(add, 10, 0, false).
 		AddItem(nil, 1, 0, false).
 		AddItem(del, 10, 0, false).
 		AddItem(nil, 0, 1, false)
+
 	root := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(top, 0, 1, true).
 		AddItem(bottom, 1, 0, false)
 
 	order := []tview.Primitive{list, editor, add, del}
+
 	app.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
 		if e.Key() == tcell.KeyTab {
 			for i, p := range order {
@@ -115,12 +130,15 @@ func main() {
 					break
 				}
 			}
+
 			return nil
 		}
+
 		return e
 	})
 
 	refresh()
+
 	if err := app.SetRoot(root, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
