@@ -59,9 +59,11 @@ func main() {
 		if len(notes) > 0 {
 			list.SetCurrentItem(cur)
 			editor.SetText(notes[cur], true)
-		} else {
-			editor.SetText("", true)
+
+			return
 		}
+
+		editor.SetText("", true)
 	}
 
 	list.SetChangedFunc(func(i int, _, _ string, _ rune) {
