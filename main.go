@@ -1,0 +1,127 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
+
+const dataFile = "notes.json"
+
+var (
+	notes []string
+	cur   int
+)
+
+func load() {
+	if b, err := os.ReadFile(dataFile); err == nil {
+		json.Unmarshal(b, &notes)
+	}
+}
+
+func save() {
+	b, _ := json.Marshal(notes)
+	os.WriteFile(dataFile, b, 0o644)
+}
+
+func title(s string) string {
+	t := strings.SplitN(s, "\n", 2)[0]
+	if t == "" {
+		return "(empty)"
+	}
+	return t
+}
+
+func main() {
+	load()
+	app := tview.NewApplication()
+
+	list := tview.NewList().ShowSecondaryText(false)
+	list.SetBorder(true).SetTitle(" Notes ")
+	editor := tview.NewTextArea()
+	editor.SetBorder(true).SetTitle(" Edit ")
+	add := tview.NewButton("Add")
+	del := tview.NewButton("Delete")
+
+	refresh := func() {
+		list.Clear()
+		for _, n := range notes {
+			list.AddItem(title(n), "", 0, nil)
+		}
+		if len(notes) > 0 {
+			list.SetCurrentItem(cur)
+			editor.SetText(notes[cur], true)
+		} else {
+			editor.SetText("", true)
+		}
+	}
+
+	list.SetChangedFunc(func(i int, _, _ string, _ rune) {
+		if i < len(notes) {
+			cur = i
+			editor.SetText(notes[i], true)
+		}
+	})
+	editor.SetChangedFunc(func() {
+		if cur < len(notes) {
+			t := editor.GetText()
+			notes[cur] = t
+			list.SetItemText(cur, title(t), "")
+			save()
+		}
+	})
+	add.SetSelectedFunc(func() {
+		notes = append(notes, "")
+		cur = len(notes) - 1
+		refresh()
+		save()
+		app.SetFocus(editor)
+	})
+	del.SetSelectedFunc(func() {
+		if len(notes) == 0 {
+			return
+		}
+		notes = append(notes[:cur], notes[cur+1:]...)
+		if cur >= len(notes) {
+			cur = len(notes) - 1
+		}
+		if cur < 0 {
+			cur = 0
+		}
+		refresh()
+		save()
+		app.SetFocus(list)
+	})
+
+	top := tview.NewFlex().AddItem(list, 30, 0, true).AddItem(editor, 0, 1, false)
+	bottom := tview.NewFlex().
+		AddItem(add, 10, 0, false).
+		AddItem(nil, 1, 0, false).
+		AddItem(del, 10, 0, false).
+		AddItem(nil, 0, 1, false)
+	root := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(top, 0, 1, true).
+		AddItem(bottom, 1, 0, false)
+
+	order := []tview.Primitive{list, editor, add, del}
+	app.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
+		if e.Key() == tcell.KeyTab {
+			for i, p := range order {
+				if p.HasFocus() {
+					app.SetFocus(order[(i+1)%len(order)])
+					break
+				}
+			}
+			return nil
+		}
+		return e
+	})
+
+	refresh()
+	if err := app.SetRoot(root, true).EnableMouse(true).Run(); err != nil {
+		panic(err)
+	}
+}
