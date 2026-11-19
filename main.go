@@ -17,9 +17,13 @@ var (
 )
 
 func load() {
-	if b, err := os.ReadFile(dataFile); err == nil {
-		json.Unmarshal(b, &notes)
+	b, err := os.ReadFile(dataFile)
+
+	if err != nil { //TODO Maybe trigger some errors?
+		return
 	}
+
+	json.Unmarshal(b, &notes)
 }
 
 func save() {
@@ -44,10 +48,13 @@ func main() {
 
 	list := tview.NewList().ShowSecondaryText(false)
 	list.SetBorder(true).SetTitle(" Notes ")
+
 	editor := tview.NewTextArea()
 	editor.SetBorder(true).SetTitle(" Edit ")
-	add := tview.NewButton("Add")
+
+	add := tview.NewButton("Add") //TODO -> SWITCH TEXT UP!
 	del := tview.NewButton("Delete")
+	help := tview.NewButton("Help (Ctrl + H)")
 
 	refresh := func() {
 		list.Clear()
@@ -78,6 +85,7 @@ func main() {
 			t := editor.GetText()
 			notes[cur] = t
 			list.SetItemText(cur, title(t), "")
+
 			save()
 		}
 	})
@@ -85,8 +93,10 @@ func main() {
 	add.SetSelectedFunc(func() {
 		notes = append(notes, "")
 		cur = len(notes) - 1
+
 		refresh()
 		save()
+
 		app.SetFocus(editor)
 	})
 
@@ -107,6 +117,7 @@ func main() {
 
 		refresh()
 		save()
+
 		app.SetFocus(list)
 	})
 
@@ -116,27 +127,32 @@ func main() {
 		AddItem(add, 10, 0, false).
 		AddItem(nil, 1, 0, false).
 		AddItem(del, 10, 0, false).
+		AddItem(nil, 1, 0, false).
+		AddItem(help, 20, 0, false). //TODO
 		AddItem(nil, 0, 1, false)
 
 	root := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(top, 0, 1, true).
 		AddItem(bottom, 1, 0, false)
 
-	order := []tview.Primitive{list, editor, add, del}
+	order := []tview.Primitive{list, editor, add, del, help}
 
 	app.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
-		if e.Key() == tcell.KeyTab {
-			for i, p := range order {
-				if p.HasFocus() {
-					app.SetFocus(order[(i+1)%len(order)])
-					break
-				}
-			}
-
-			return nil
+		if e.Key() != tcell.KeyTab {
+			return e
 		}
 
-		return e
+		for i, p := range order {
+			if !p.HasFocus() {
+				continue
+			}
+
+			app.SetFocus(order[(i+1)%len(order)])
+
+			break
+		}
+
+		return nil
 	})
 
 	refresh()
