@@ -9,7 +9,13 @@ import (
 	"github.com/rivo/tview"
 )
 
-const dataFile = "notes.json"
+const (
+	dataFile   = "notes.json"
+	colorBg    = "#1e1e2e"
+	colorWhite = "#ffffff"
+	colorBlack = "#000000"
+	colorRed   = "#ff004c"
+)
 
 var notes []string
 var cur int
@@ -39,39 +45,47 @@ func getNoteTitle(s string) string {
 	return t
 }
 
+func initialiseBorderColorsListOrEditor(element *tview.Box) {
+	element.SetBorderColor(tcell.GetColor(colorWhite))
+	element.SetFocusFunc(func() { element.SetBorderColor(tcell.GetColor(colorRed)) })
+	element.SetBlurFunc(func() { element.SetBorderColor(tcell.GetColor(colorWhite)) })
+}
+
 func main() {
 	load()
 
 	app := tview.NewApplication()
 
-	tview.Styles.PrimitiveBackgroundColor = tcell.GetColor("#1e1e2e")
-	tview.Styles.TitleColor = tcell.GetColor("#ffffff")
-	tview.Styles.BorderColor = tcell.GetColor("#ffffff")
+	tview.Styles.PrimitiveBackgroundColor = tcell.GetColor(colorBg)
+	tview.Styles.TitleColor = tcell.GetColor(colorWhite)
+	tview.Styles.BorderColor = tcell.GetColor(colorWhite)
 
-	header := tview.NewTextView().SetTextColor(tcell.GetColor("#ff004c")).SetTextAlign(tview.AlignCenter).SetText("MEAT-PROXY")
+	header := tview.NewTextView().SetTextColor(tcell.GetColor(colorRed)).SetTextAlign(tview.AlignCenter).SetText("MEAT-PROXY")
 
 	list := tview.NewList().ShowSecondaryText(false)
 	list.SetBorder(true).SetTitle(" Notes ")
+	initialiseBorderColorsListOrEditor(list.Box)
 
 	editor := tview.NewTextArea()
 	editor.SetBorder(true).SetTitle(" Edit ")
+	initialiseBorderColorsListOrEditor(editor.Box)
 
 	add := tview.NewButton("Add")
 
 	add.SetStyle(tcell.StyleDefault.
-		Background(tcell.GetColor("#ffffff")).
-		Foreground(tcell.GetColor("#000000")))
+		Background(tcell.GetColor(colorWhite)).
+		Foreground(tcell.GetColor(colorBlack)))
 	add.SetActivatedStyle(tcell.StyleDefault.
-		Background(tcell.GetColor("#000000")).
-		Foreground(tcell.GetColor("#ffffff"))) // Focused!
+		Background(tcell.GetColor(colorBlack)).
+		Foreground(tcell.GetColor(colorWhite))) // Focused!
 
 	del := tview.NewButton("Delete")
 	del.SetStyle(tcell.StyleDefault.
-		Background(tcell.GetColor("#ff004c")).
-		Foreground(tcell.GetColor("#000000")))
+		Background(tcell.GetColor(colorRed)).
+		Foreground(tcell.GetColor(colorBlack)))
 	del.SetActivatedStyle(tcell.StyleDefault.
-		Background(tcell.GetColor("#000000")).
-		Foreground(tcell.GetColor("#ff004c"))) // Focused!
+		Background(tcell.GetColor(colorBlack)).
+		Foreground(tcell.GetColor(colorRed))) // Focused!
 
 	help := tview.NewTextView().SetText("n: new | Tab: switch") //TODO
 
