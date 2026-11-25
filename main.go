@@ -29,14 +29,14 @@ func save() {
 	os.WriteFile(dataFile, b, 0o644)
 }
 
-func getTitle(s string) string {
+func getNoteTitle(s string) string {
 	t := strings.SplitN(s, "\n", 2)[0]
 
 	if t == "" {
 		return "<empty>"
 	}
 
-	return t //TODO -> Maybe add a star in front of it?
+	return t
 }
 
 func main() {
@@ -45,8 +45,8 @@ func main() {
 	app := tview.NewApplication()
 
 	tview.Styles.PrimitiveBackgroundColor = tcell.GetColor("#1e1e2e")
-	tview.Styles.TitleColor = tcell.GetColor("#fff")
-	tview.Styles.BorderColor = tcell.GetColor("#fff")
+	tview.Styles.TitleColor = tcell.GetColor("#ffffff")
+	tview.Styles.BorderColor = tcell.GetColor("#ffffff")
 
 	header := tview.NewTextView().SetTextColor(tcell.GetColor("#ff004c")).SetTextAlign(tview.AlignCenter).SetText("MEAT-PROXY")
 
@@ -57,14 +57,29 @@ func main() {
 	editor.SetBorder(true).SetTitle(" Edit ")
 
 	add := tview.NewButton("Add")
+
+	add.SetStyle(tcell.StyleDefault.
+		Background(tcell.GetColor("#ffffff")).
+		Foreground(tcell.GetColor("#000000")))
+	add.SetActivatedStyle(tcell.StyleDefault.
+		Background(tcell.GetColor("#000000")).
+		Foreground(tcell.GetColor("#ffffff"))) // Focused!
+
 	del := tview.NewButton("Delete")
+	del.SetStyle(tcell.StyleDefault.
+		Background(tcell.GetColor("#ff004c")).
+		Foreground(tcell.GetColor("#000000")))
+	del.SetActivatedStyle(tcell.StyleDefault.
+		Background(tcell.GetColor("#000000")).
+		Foreground(tcell.GetColor("#ff004c"))) // Focused!
+
 	help := tview.NewTextView().SetText("n: new | Tab: switch") //TODO
 
 	refresh := func() {
 		list.Clear()
 
 		for _, n := range notes {
-			list.AddItem(getTitle(n), "", 0, nil)
+			list.AddItem(getNoteTitle(n), "", 0, nil)
 		}
 
 		if len(notes) > 0 {
@@ -78,20 +93,24 @@ func main() {
 	}
 
 	list.SetChangedFunc(func(i int, _, _ string, _ rune) {
-		if i < len(notes) {
-			cur = i
-			editor.SetText(notes[i], true)
+		if i >= len(notes) {
+			return
 		}
+
+		cur = i
+		editor.SetText(notes[i], true)
 	})
 
 	editor.SetChangedFunc(func() {
-		if cur < len(notes) {
-			t := editor.GetText()
-			notes[cur] = t
-			list.SetItemText(cur, getTitle(t), "")
-
-			save()
+		if cur >= len(notes) {
+			return
 		}
+
+		t := editor.GetText()
+		notes[cur] = t
+		list.SetItemText(cur, getNoteTitle(t), "")
+
+		save()
 	})
 
 	add.SetSelectedFunc(func() {
