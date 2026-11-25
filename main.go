@@ -11,10 +11,8 @@ import (
 
 const dataFile = "notes.json"
 
-var (
-	notes []string
-	cur   int
-)
+var notes []string
+var cur int
 
 func load() {
 	b, err := os.ReadFile(dataFile)
@@ -31,14 +29,14 @@ func save() {
 	os.WriteFile(dataFile, b, 0o644)
 }
 
-func title(s string) string {
+func getTitle(s string) string {
 	t := strings.SplitN(s, "\n", 2)[0]
 
 	if t == "" {
-		return "(empty)"
+		return "<empty>"
 	}
 
-	return t
+	return t //TODO -> Maybe add a star in front of it?
 }
 
 func main() {
@@ -46,21 +44,27 @@ func main() {
 
 	app := tview.NewApplication()
 
+	tview.Styles.PrimitiveBackgroundColor = tcell.GetColor("#1e1e2e")
+	tview.Styles.TitleColor = tcell.GetColor("#fff")
+	tview.Styles.BorderColor = tcell.GetColor("#fff")
+
+	header := tview.NewTextView().SetTextColor(tcell.GetColor("#ff004c")).SetTextAlign(tview.AlignCenter).SetText("MEAT-PROXY")
+
 	list := tview.NewList().ShowSecondaryText(false)
 	list.SetBorder(true).SetTitle(" Notes ")
 
 	editor := tview.NewTextArea()
 	editor.SetBorder(true).SetTitle(" Edit ")
 
-	add := tview.NewButton("Add") //TODO -> SWITCH TEXT UP!
+	add := tview.NewButton("Add")
 	del := tview.NewButton("Delete")
-	help := tview.NewButton("Help (Ctrl + H)")
+	help := tview.NewTextView().SetText("n: new | Tab: switch") //TODO
 
 	refresh := func() {
 		list.Clear()
 
 		for _, n := range notes {
-			list.AddItem(title(n), "", 0, nil)
+			list.AddItem(getTitle(n), "", 0, nil)
 		}
 
 		if len(notes) > 0 {
@@ -84,7 +88,7 @@ func main() {
 		if cur < len(notes) {
 			t := editor.GetText()
 			notes[cur] = t
-			list.SetItemText(cur, title(t), "")
+			list.SetItemText(cur, getTitle(t), "")
 
 			save()
 		}
@@ -121,21 +125,21 @@ func main() {
 		app.SetFocus(list)
 	})
 
-	top := tview.NewFlex().AddItem(list, 30, 0, true).AddItem(editor, 0, 1, false)
+	top := tview.NewFlex().AddItem(list, 40, 0, true).AddItem(editor, 0, 1, false)
 
 	bottom := tview.NewFlex().
 		AddItem(add, 10, 0, false).
 		AddItem(nil, 1, 0, false).
 		AddItem(del, 10, 0, false).
 		AddItem(nil, 1, 0, false).
-		AddItem(help, 20, 0, false). //TODO
-		AddItem(nil, 0, 1, false)
+		AddItem(help, 0, 1, false)
 
 	root := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(header, 1, 0, false).
 		AddItem(top, 0, 1, true).
 		AddItem(bottom, 1, 0, false)
 
-	order := []tview.Primitive{list, editor, add, del, help}
+	order := []tview.Primitive{list, editor, add, del} //TABCYCLE?
 
 	app.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
 		if e.Key() != tcell.KeyTab {
