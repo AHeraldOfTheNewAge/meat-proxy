@@ -87,14 +87,17 @@ func main() {
 		Background(tcell.GetColor(colorBlack)).
 		Foreground(tcell.GetColor(colorRed))) // Focused!
 
-	help := tview.NewTextView().SetText("n: new | Tab: switch") //TODO
+	help := tview.NewTextView().SetText("Tab: Switch element focus | If on list n: New note, Delete: Remove note")
 
 	refresh := func() {
+		curAux := cur // remember before Clear/AddItem overwrite it
 		list.Clear()
 
 		for _, n := range notes {
 			list.AddItem(getNoteTitle(n), "", 0, nil)
 		}
+
+		cur = curAux // restore - so we can focus the newly added note!
 
 		if len(notes) > 0 {
 			list.SetCurrentItem(cur)
@@ -127,7 +130,7 @@ func main() {
 		save()
 	})
 
-	add.SetSelectedFunc(func() {
+	doAdd := func() {
 		notes = append(notes, "")
 		cur = len(notes) - 1
 
@@ -135,9 +138,9 @@ func main() {
 		save()
 
 		app.SetFocus(editor)
-	})
+	}
 
-	del.SetSelectedFunc(func() {
+	doDelete := func() {
 		if len(notes) == 0 {
 			return
 		}
@@ -156,6 +159,25 @@ func main() {
 		save()
 
 		app.SetFocus(list)
+	}
+
+	add.SetSelectedFunc(doAdd)
+	del.SetSelectedFunc(doDelete)
+
+	list.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
+		if e.Key() == tcell.KeyDelete { // On delete keyboard button press - remove a note
+			doDelete()
+
+			return nil
+		}
+
+		if e.Rune() == 'n' { // On n keyboard button press - add a new note
+			doAdd()
+
+			return nil
+		}
+
+		return e // Pass other keys through
 	})
 
 	top := tview.NewFlex().AddItem(list, 40, 0, true).AddItem(editor, 0, 1, false)
