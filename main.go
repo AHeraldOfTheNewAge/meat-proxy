@@ -13,7 +13,6 @@ const (
 	dataFile   = "notes.json"
 	colorBg    = "#1e1e2e"
 	colorWhite = "#ffffff"
-	colorBlack = "#000000"
 	colorRed   = "#ff004c"
 )
 
@@ -70,24 +69,7 @@ func main() {
 	editor.SetBorder(true).SetTitle(" Edit ")
 	initialiseBorderColorsListOrEditor(editor.Box)
 
-	add := tview.NewButton("Add")
-
-	add.SetStyle(tcell.StyleDefault.
-		Background(tcell.GetColor(colorWhite)).
-		Foreground(tcell.GetColor(colorBlack)))
-	add.SetActivatedStyle(tcell.StyleDefault.
-		Background(tcell.GetColor(colorBlack)).
-		Foreground(tcell.GetColor(colorWhite))) // Focused!
-
-	del := tview.NewButton("Delete")
-	del.SetStyle(tcell.StyleDefault.
-		Background(tcell.GetColor(colorRed)).
-		Foreground(tcell.GetColor(colorBlack)))
-	del.SetActivatedStyle(tcell.StyleDefault.
-		Background(tcell.GetColor(colorBlack)).
-		Foreground(tcell.GetColor(colorRed))) // Focused!
-
-	help := tview.NewTextView().SetText("Tab: Switch element focus | If on list n: New note, Delete: Remove note")
+	help := tview.NewTextView().SetText("Tab: Switch panel focus | n: New note | Delete: Remove note")
 
 	refresh := func() {
 		curAux := cur // remember before Clear/AddItem overwrite it
@@ -161,9 +143,6 @@ func main() {
 		app.SetFocus(list)
 	}
 
-	add.SetSelectedFunc(doAdd)
-	del.SetSelectedFunc(doDelete)
-
 	list.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
 		if e.Key() == tcell.KeyDelete { // On delete keyboard button press - remove a note
 			doDelete()
@@ -183,9 +162,7 @@ func main() {
 	top := tview.NewFlex().AddItem(list, 40, 0, true).AddItem(editor, 0, 1, false)
 
 	bottom := tview.NewFlex().
-		AddItem(add, 10, 0, false).
 		AddItem(nil, 1, 0, false).
-		AddItem(del, 10, 0, false).
 		AddItem(nil, 1, 0, false).
 		AddItem(help, 0, 1, false)
 
@@ -194,7 +171,7 @@ func main() {
 		AddItem(top, 0, 1, true).
 		AddItem(bottom, 1, 0, false)
 
-	order := []tview.Primitive{list, editor, add, del} //TABCYCLE?
+	order := []tview.Primitive{list, editor} //TABCYCLE?
 
 	app.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
 		if e.Key() != tcell.KeyTab {
